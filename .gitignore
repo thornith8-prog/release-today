@@ -1,0 +1,13 @@
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+*.iml
+.env
+
+# Python cache (docs folder)
+__pycache__/
+*.pyc
+*.pyo
