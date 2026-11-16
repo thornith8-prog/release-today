@@ -22,12 +22,15 @@ jobs:
           channel: stable
 
       - run: flutter pub get
-
       - name: Create app config
         env:
-          APP_CONFIG: ${{ vars.APP_CONFIG }}
+          NEWS_API_URL: ${{ vars.NEWS_API_URL }}
         run: |
-          printf '%s\n' "$APP_CONFIG" > .env
+          if [ -z "$NEWS_API_URL" ]; then
+            echo "::error::NEWS_API_URL is empty or unavailable to this job"
+            exit 1
+          fi
+          printf 'NEWS_API_URL=%s\nNEWS_API_USE_CORS_PROXY=false\n' "$NEWS_API_URL" > .env
 
       - run: flutter analyze
       - run: flutter build web --release --base-href=/release-today/
