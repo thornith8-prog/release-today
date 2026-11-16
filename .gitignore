@@ -5,7 +5,9 @@ build/
 .flutter-plugins-dependencies
 .idea/
 *.iml
+.metadata
 .env
+.DS_Store
 
 # Python cache (docs folder)
 __pycache__/
