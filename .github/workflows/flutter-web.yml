@@ -21,6 +21,12 @@ jobs:
           channel: stable
       - run: flutter pub get
       - run: flutter analyze
+      - name: Create app config
+        env:
+          APP_CONFIG: ${{ vars.APP_CONFIG }}
+        run: |
+          printf '%s\n' "$APP_CONFIG" > .env
+
       - run: flutter build web --release --base-href=/release-today/
 
       - name: Setup Pages
