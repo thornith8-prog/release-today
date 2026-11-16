@@ -32,10 +32,10 @@ flutter build web --release
 
 Output goes to `build/web/`. That directory is self-contained (HTML, JS, CSS, assets, fonts) — copy it to your host.
 
-**Build-time configuration** comes from `.env` (bundled as an asset, see `pubspec.yaml`):
+**Build-time configuration** comes from `.env` (gitignored, local-dev only — see `pubspec.yaml`; it is **not** bundled into the web build):
 
 ```
-cp .env.example .env
+cp .env.example .env   # local dev only
 ```
 
 Key variables (`lib/core/env.dart`):
@@ -47,7 +47,7 @@ Key variables (`lib/core/env.dart`):
 | `NEWS_API_TIMEOUT` | Request timeout seconds | `30` |
 | `ABOUT_URL`, `WHAT_WE_DO_URL`, `TERMS_URL`, `PRIVACY_URL` | Legal/info links | `https://newsai.app/…` |
 
-> ⚠️ `.env` is **gitignored** and **ships inside the web build**. Do not put secrets in it. Some hosts don't serve dotfiles; if yours doesn't, override at build time instead:
+> ⚠️ `.env` is **gitignored** and is **not** shipped with the web build. Do not put secrets in it. For deployment, pass config via `--dart-define` instead:
 > ```bash
 > flutter build web --release \
 >   --dart-define=NEWS_API_URL=https://api.example.com \

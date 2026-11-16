@@ -22,10 +22,14 @@ flutter run -d web-server
 Production build: `flutter build web --release` (output in `build/web`).
 
 ## Configure
-`.env` is bundled as an asset. `NEWS_API_URL` points at the backend; leave it empty to use demo data.
+`NEWS_API_URL` points at the backend; leave it empty to use demo data.
 Match `NEWS_API_LATEST_PATH`, `NEWS_API_SEARCH_PATH`, `NEWS_API_SEARCH_METHOD` and `NEWS_API_SEARCH_PARAM` to the API's `/docs`.
-Some hosts do not serve dotfiles; in that case build with `--dart-define=NEWS_API_URL=https://...`.
-Do not put secrets in `.env`: it ships with the web build.
+
+`.env` is **local-dev only** (gitignored, not bundled into the web build). Copy `.env.example` to `.env` to override defaults locally:
+```bash
+cp .env.example .env
+```
+For deployment, pass config via `--dart-define` instead (e.g. `--dart-define=NEWS_API_URL=https://api.example.com`), since `.env` is not shipped with the build. Do not put secrets in `.env`.
 
 **CORS:** the browser calls the API directly, so the FastAPI backend must allow your web origin:
 ```python

@@ -7,7 +7,6 @@ import '../data/repositories/chat_history.dart';
 import '../data/repositories/news_repository.dart';
 import 'articles_controller.dart';
 import 'search_bar_controller.dart';
-import 'topics_controller.dart';
 
 /// Search results for one query and its multi-turn conversation stream.
 class ResultsController extends ArticlesController {

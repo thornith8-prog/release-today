@@ -6,7 +6,6 @@ import '../data/models/chat_turn.dart';
 import '../data/models/topic_entry.dart';
 import '../data/repositories/news_repository.dart';
 import '../data/repositories/topic_entry_repository.dart';
-import 'topics_controller.dart';
 
 /// Paginated list of entries for a single topic and its multi-turn conversation stream.
 class TopicEntryController extends GetxController {

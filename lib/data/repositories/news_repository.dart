@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:get/get.dart';
 import 'package:newsai/core/env.dart';
-import 'package:newsai/data/repositories/NewsRepository.dart';
 
 import '../../services/api_client.dart';
 import '../models/article.dart';
@@ -16,6 +15,15 @@ class NewsApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+abstract class NewsRepository {
+  Future<Articles> latest({int skip = 0, int limit = 20});
+
+  Future<Articles> search(String query, {int limit = 20, int? topicId});
+
+  Future<ChatHistory> getChatByTopicId(int topicId,
+      {int skip = 0, int limit = 20});
 }
 
 class ApiNewsRepository implements NewsRepository {
