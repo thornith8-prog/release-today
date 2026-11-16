@@ -33,7 +33,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     super.initState();
     if (widget.article != null) {
       setArticleMetaTags(
-        title: widget.article!.title ?? 'NewsAI',
+        title: widget.article!.title ?? 'Release Today',
         description: widget.article!.summary?.trim().isNotEmpty == true
             ? widget.article!.summary
             : widget.article!.title,

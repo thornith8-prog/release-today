@@ -8,7 +8,7 @@ import '../../widgets/html_content_view.dart';
 /// Static content shown when the backend has no `terms` setting.
 const _kTermsFallbackHtml = '''
 <h1>Terms &amp; Conditions</h1>
-<p>By using NewsAI, you agree to the following terms and conditions.</p>
+<p>By using Release Today, you agree to the following terms and conditions.</p>
 <ul>
   <li>Content is provided for informational purposes only.</li>
   <li>We are not responsible for third-party publisher content.</li>

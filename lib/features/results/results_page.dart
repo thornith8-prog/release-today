@@ -417,7 +417,7 @@ class _ChatPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'NewsAI',
+                      'Release Today',
                       style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,

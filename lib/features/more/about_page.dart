@@ -8,7 +8,7 @@ import '../../widgets/html_content_view.dart';
 /// Static content shown when the backend has no `about-us` setting.
 const _kFallbackHtml = '''
 <h1>About us</h1>
-<p>Welcome to NewsAI — your AI-powered news companion.</p>
+<p>Welcome to Release Today — your AI-powered news companion.</p>
 <p>We help you discover, search, and stay on top of the stories that matter,
 with smart topic tracking and personalized recommendations.</p>
 <h2>What we do</h2>

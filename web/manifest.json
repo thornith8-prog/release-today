@@ -1,11 +1,11 @@
 {
-    "name": "newsai",
-    "short_name": "newsai",
+    "name": "Release Today",
+    "short_name": "Release Today",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "AI-powered news search and discovery.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

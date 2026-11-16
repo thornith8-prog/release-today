@@ -9,7 +9,7 @@ import '../data/models/article.dart';
 enum _ShareAction { copy, telegram, facebook, linkedin, x }
 
 /// Small circular share icon that opens a menu: Copy link, Telegram,
-/// Facebook, LinkedIn, X. All options share the same NewsAI link
+/// Facebook, LinkedIn, X. All options share the same Release Today link
 /// (see [ArticleShare]). Renders nothing when the article has no id.
 class ArticleShareButton extends StatelessWidget {
   const ArticleShareButton({super.key, required this.article});

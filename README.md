@@ -1,6 +1,6 @@
-# NewsAI (Flutter Web)
+# Release Today (Flutter Web)
 
-Responsive Flutter web front end for the NewsAI backend: home carousel, search results grid, login dialog,
+Responsive Flutter web front end for the Release Today backend: home carousel, search results grid, login dialog,
 prompt-style search bar pinned to the bottom. State management: GetX.
 
 ## Setup

@@ -411,7 +411,7 @@ class _AuthDialogState extends State<_AuthDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    isSignUp ? 'Create an account' : 'Sign in to NewsAI',
+                    isSignUp ? 'Create an account' : 'Sign in to Release Today',
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,

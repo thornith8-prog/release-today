@@ -68,7 +68,7 @@ class _ContactUsDialogState extends State<ContactUsDialog> {
       scheme: 'mailto',
       path: Env.contactEmail,
       query: _encodeQuery({
-        'subject': subject.isEmpty ? 'NewsAI contact from $name' : subject,
+        'subject': subject.isEmpty ? 'Release Today contact from $name' : subject,
         'body': 'Name: $name\nEmail: $email\n\n$message',
       }),
     );

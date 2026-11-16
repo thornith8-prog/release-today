@@ -48,7 +48,7 @@ class _NewsAiAppState extends State<NewsAiApp> {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp.router(
-      title: 'NewsAI',
+      title: 'Release Today',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       scrollBehavior: const AppScrollBehavior(),
