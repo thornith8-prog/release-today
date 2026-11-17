@@ -298,25 +298,48 @@ class ApiClient extends GetConnect {
       decoder: decoder,
     );
 
-    // On Flutter Web, if the backend lacks Access-Control-Allow-Origin headers,
-    // XMLHttpRequest fails with statusCode == null ("XMLHttpRequest error.").
-    // Fall back to the local dev CORS proxy on 127.0.0.1:8787 so Chrome can
-    // run without --disable-web-security.
-    if (kIsWeb && response.statusCode == null) {
-      final proxyResponse = await _proxyClient.get<T>(
-        url,
-        headers: headers,
-        contentType: contentType,
-        query: query,
-        decoder: decoder,
+    // On Flutter Web, if the backend lacks Access-Control-Allow-Origin headers
+    // for the page's origin, XMLHttpRequest fails with statusCode == null
+    // ("XMLHttpRequest error."). Fall back to the local dev CORS proxy on
+    // 127.0.0.1:8787 so Chrome can run without --disable-web-security.
+    if (kIsWeb && Env.useCorsProxy && response.statusCode == null) {
+      return _viaCorsProxy<T>(
+        () => _proxyClient.get<T>(
+          url,
+          headers: headers,
+          contentType: contentType,
+          query: query,
+          decoder: decoder,
+        ),
       );
+    }
+
+    return response;
+  }
+
+  /// Fall back to the local dev CORS proxy (http://127.0.0.1:8787) when a
+  /// direct browser XHR failed with `statusCode == null` ("XMLHttpRequest
+  /// error.", i.e. the request was CORS- or network-blocked).
+  ///
+  /// Returns the proxied response when the proxy is reachable, and marks the
+  /// proxy as the preferred transport for the rest of the session. Throws a
+  /// descriptive error when the proxy is not running so callers can surface an
+  /// actionable message instead of the opaque "XMLHttpRequest error."
+  Future<Response<T>> _viaCorsProxy<T>(
+    Future<Response<T>> Function() fetch,
+  ) async {
+    try {
+      final proxyResponse = await fetch();
       if (proxyResponse.statusCode != null) {
         _useWebCorsProxy = true;
         return proxyResponse;
       }
+    } catch (_) {
+      // Proxy not reachable.
     }
-
-    return response;
+    throw 'The local CORS proxy at http://127.0.0.1:8787 is not running. '
+        'Start it with `dart run tool/cors_proxy.dart` (or ./run_web.sh), '
+        'then reload the page.';
   }
 
   @override
@@ -352,19 +375,17 @@ class ApiClient extends GetConnect {
     );
 
     if (kIsWeb && Env.useCorsProxy && response.statusCode == null) {
-      final proxyResponse = await _proxyClient.post<T>(
-        url,
-        body: body,
-        contentType: contentType,
-        headers: headers,
-        query: query,
-        decoder: decoder,
-        uploadProgress: uploadProgress,
+      return _viaCorsProxy<T>(
+        () => _proxyClient.post<T>(
+          url,
+          body: body,
+          contentType: contentType,
+          headers: headers,
+          query: query,
+          decoder: decoder,
+          uploadProgress: uploadProgress,
+        ),
       );
-      if (proxyResponse.statusCode != null) {
-        _useWebCorsProxy = true;
-        return proxyResponse;
-      }
     }
 
     return response;

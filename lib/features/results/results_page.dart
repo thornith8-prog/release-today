@@ -1084,6 +1084,41 @@ class _ResultTile extends StatelessWidget {
     final itemKey = result.url != null && result.url!.isNotEmpty
         ? result.url!
         : result.title;
+    final isMobile = Breakpoints.of(context) == ScreenSize.mobile;
+
+    Widget summaryWidget = const SizedBox.shrink();
+    if (result.summary.isNotEmpty) {
+      summaryWidget = StreamingText(
+        text: result.summary,
+        streamKey: 'summary_$itemKey',
+        maxLines: null,
+        softWrap: true,
+        style: textTheme.bodyMedium?.copyWith(
+          color: AppColors.ink.withValues(alpha: 0.75),
+          height: 1.4,
+        ),
+      );
+      // On mobile, clip the summary streaming text under the title to a
+      // rounded rect so it stays tidy within the narrower result tile.
+      if (isMobile) {
+        summaryWidget = ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: summaryWidget,
+        );
+      }
+    }
+
+    final titleStream = StreamingText(
+      text: result.title,
+      streamKey: 'title_$itemKey',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: textTheme.bodyLarge?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+        height: 1.3,
+      ),
+    );
 
     return Material(
       color: Colors.transparent,
@@ -1100,104 +1135,85 @@ class _ResultTile extends StatelessWidget {
             : null,
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (result.imageUrl.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    result.imageUrl,
-                    width: 150,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const ShimmerLoading(
+              // Image + title row.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (result.imageUrl.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        result.imageUrl,
                         width: 150,
                         height: 80,
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                      );
-                    },
-                    errorBuilder: (context, error, stack) => Image.asset(
-                      'assets/icons/ic_news.png',
-                      width: 150,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StreamingText(
-                      text: result.title,
-                      streamKey: 'title_$itemKey',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
-                        height: 1.3,
-                      ),
-                    ),
-                    if (result.summary.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      StreamingText(
-                        text: result.summary,
-                        streamKey: 'summary_$itemKey',
-                        maxLines: null,
-                        softWrap: true,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.ink.withValues(alpha: 0.75),
-                          height: 1.4,
+                        fit: BoxFit.cover,
+                        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const ShimmerLoading(
+                            width: 150,
+                            height: 80,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          );
+                        },
+                        errorBuilder: (context, error, stack) => Image.asset(
+                          'assets/icons/ic_news.png',
+                          width: 150,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (result.source.isNotEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.badge.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              result.source,
-                              style: const TextStyle(
-                                color: AppColors.badge,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        if (result.publishedAtText.isNotEmpty) ...[
-                          Text(
-                            _getCurrentDate(result.publishedAtText),
-                            style: textTheme.bodySmall?.copyWith(
-                              color: AppColors.ink.withValues(alpha: 0.5),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ],
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(child: titleStream),
+                  const SizedBox(width: 8),
+                  // Separate tap target: sharing does not open the publisher link.
+                  ArticleShareButton(article: result.article),
+                ],
+              ),
+              // Summary below both the image and the title, clipped on mobile.
+              if (result.summary.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                summaryWidget,
+              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (result.source.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.badge.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        result.source,
+                        style: const TextStyle(
+                          color: AppColors.badge,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  if (result.publishedAtText.isNotEmpty) ...[
+                    Text(
+                      _getCurrentDate(result.publishedAtText),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.ink.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
-                ),
+                ],
               ),
-              const SizedBox(width: 8),
-              // Separate tap target: sharing does not open the publisher link.
-              ArticleShareButton(article: result.article),
             ],
           ),
         ),

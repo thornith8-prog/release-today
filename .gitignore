@@ -18,3 +18,4 @@ __pycache__/
 *.dylib
 *.so
 *.dll
+/run_web.sh
