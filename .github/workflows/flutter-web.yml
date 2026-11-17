@@ -37,7 +37,7 @@ jobs:
           printf 'NEWS_API_URL=%s\nNEWS_API_USE_CORS_PROXY=false\n' "$NEWS_API_URL" > .env
 
       - run: flutter analyze
-      - run: flutter build web --release --base-href=/release-today/
+      - run: flutter build web --release --base-href=/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
