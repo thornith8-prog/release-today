@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:newsai/data/models/article.dart';
 import 'package:newsai/data/models/chat_turn.dart';
 
+import '../controllers/app_controller.dart';
 import '../data/repositories/chat_history.dart';
 import '../data/repositories/news_repository.dart';
 import 'articles_controller.dart';
@@ -22,10 +23,33 @@ class ResultsController extends ArticlesController {
   /// The active topic ID. On fresh searches this starts as null and is populated
   /// as soon as the first search response assigns a new topic, ensuring follow-up
   /// searches append to the same topic rather than creating duplicate topics.
+  ///
+  /// This stays `null` when no user is signed in; the effective topic id sent to
+  /// the API is exposed by [topicId].
   final RxnInt currentTopicId;
 
-  int? get topicId => currentTopicId.value;
-  set topicId(int? value) => currentTopicId.value = value;
+  /// Whether a user session is currently signed in.
+  bool get _isSignedIn {
+    if (!Get.isRegistered<AppController>()) return false;
+    return Get.find<AppController>().user.value != null;
+  }
+
+  /// Effective topic id sent with search requests.
+  ///
+  /// - Not signed in: always `0` — no topic is associated with the search, and a
+  ///   backend-assigned topic id is never adopted so it stays `0` for the session.
+  /// - Signed in: the user's current topic ([currentTopicId]); `null` until the
+  ///   first search response assigns one, binding the topic to the signed-in user.
+  int? get topicId {
+    if (!_isSignedIn) return 0;
+    return currentTopicId.value;
+  }
+
+  set topicId(int? value) {
+    // When nobody is signed in there is no user topic to pin searches to; keep
+    // the internal topic unset so a fresh search always starts topic-less.
+    currentTopicId.value = _isSignedIn ? value : null;
+  }
 
   /// Ordered list of chat turns (user prompt + assistant results).
   final turns = <ChatTurn>[].obs;
@@ -140,9 +164,8 @@ class ResultsController extends ArticlesController {
       );
     }
 
-    final res = await repository.search(query,
-        limit: 20, topicId: currentTopicId.value);
-    if (res.topicId != null) {
+    final res = await repository.search(query, limit: 20, topicId: topicId);
+    if (res.topicId != null && _isSignedIn) {
       currentTopicId.value = res.topicId;
       if (Get.isRegistered<SearchBarController>()) {
         Get.find<SearchBarController>().setActiveTopic(res.topicId);
@@ -161,9 +184,8 @@ class ResultsController extends ArticlesController {
     turns.add(turn);
 
     try {
-      final res =
-          await repository.search(q, limit: 20, topicId: currentTopicId.value);
-      if (res.topicId != null) {
+      final res = await repository.search(q, limit: 20, topicId: topicId);
+      if (res.topicId != null && _isSignedIn) {
         currentTopicId.value = res.topicId;
         if (Get.isRegistered<SearchBarController>()) {
           Get.find<SearchBarController>().setActiveTopic(res.topicId);
@@ -187,8 +209,8 @@ class ResultsController extends ArticlesController {
 
     try {
       final res = await repository.search(turn.prompt,
-          limit: 20, topicId: currentTopicId.value);
-      if (res.topicId != null) {
+          limit: 20, topicId: topicId);
+      if (res.topicId != null && _isSignedIn) {
         currentTopicId.value = res.topicId;
         if (Get.isRegistered<SearchBarController>()) {
           Get.find<SearchBarController>().setActiveTopic(res.topicId);

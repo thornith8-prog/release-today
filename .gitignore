@@ -19,3 +19,5 @@ __pycache__/
 *.so
 *.dll
 /run_web.sh
+/.github/workflows/qodana_code_quality.yml
+/qodana.yaml
