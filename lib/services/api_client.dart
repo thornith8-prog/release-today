@@ -300,8 +300,9 @@ class ApiClient extends GetConnect {
 
     // On Flutter Web, if the backend lacks Access-Control-Allow-Origin headers,
     // XMLHttpRequest fails with statusCode == null ("XMLHttpRequest error.").
-    // Fall back to the local dev CORS proxy on 127.0.0.1:8787 (only when enabled).
-    if (kIsWeb && Env.useCorsProxy && response.statusCode == null) {
+    // Fall back to the local dev CORS proxy on 127.0.0.1:8787 so Chrome can
+    // run without --disable-web-security.
+    if (kIsWeb && response.statusCode == null) {
       final proxyResponse = await _proxyClient.get<T>(
         url,
         headers: headers,

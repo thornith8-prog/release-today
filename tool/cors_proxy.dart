@@ -51,7 +51,8 @@ Future<void> main() async {
         !path.startsWith('/search') &&
         !path.startsWith('/health') &&
         !path.startsWith('/recommendations') &&
-        !path.startsWith('/partners')) {
+        !path.startsWith('/partners') &&
+        !path.startsWith('/settings')) {
       res.statusCode = HttpStatus.forbidden;
       await res.close();
       continue;
