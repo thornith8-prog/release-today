@@ -46,6 +46,7 @@ class Env {
   static String get loginPath => _get('NEWS_API_LOGIN_PATH', '/auth/login');
   static String get refreshPath => _get('NEWS_API_REFRESH_PATH', '/auth/refresh');
   static String get topicsPath => _get('NEWS_API_TOPICS_PATH', '/search-topic/topics');
+  static String get settingsPath => _get('NEWS_API_SETTINGS_PATH', '/settings');
   // Contact Us dialog. Override these in `.env` with your real accounts.
   static String get contactEmail => _get('CONTACT_EMAIL', 'support@newsai.app');
   static String get telegramUrl => _get('CONTACT_TELEGRAM_URL', 'https://t.me/newsai');

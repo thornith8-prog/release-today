@@ -5,22 +5,6 @@ import '../../controllers/about_controller.dart';
 import '../../core/breakpoints.dart';
 import '../../widgets/html_content_view.dart';
 
-/// Static content shown when the backend has no `about-us` setting.
-const _kFallbackHtml = '''
-<h1>About us</h1>
-<p>Welcome to Release Today — your AI-powered news companion.</p>
-<p>We help you discover, search, and stay on top of the stories that matter,
-with smart topic tracking and personalized recommendations.</p>
-<h2>What we do</h2>
-<ul>
-  <li>Aggregate news from trusted sources.</li>
-  <li>Let you follow topics and get notified of new entries.</li>
-  <li>Provide AI-assisted search across your recent queries.</li>
-</ul>
-<h2>Contact</h2>
-<p>Questions or feedback? Reach us at support@example.com.</p>
-''';
-
 /// About us page. Fetches dynamic content from `GET /settings/about-us` via
 /// [AboutController] and falls back to static content when unavailable.
 ///
@@ -42,8 +26,7 @@ class AboutPage extends GetView<AboutController> {
                   padding: EdgeInsets.fromLTRB(pad, 16, pad, 24),
                   sliver: SliverToBoxAdapter(
                     child: HtmlContentView(
-                      html: controller.setting.value?.contentHtml ??
-                          _kFallbackHtml,
+                      html: controller.setting.value?.contentHtml ?? '',
                     ),
                   ),
                 ),

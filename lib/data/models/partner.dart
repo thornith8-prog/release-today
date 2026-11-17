@@ -2,7 +2,7 @@ class Partner {
   int? code;
   String? status;
   String? message;
-  Data? data;
+  PartnerData? data;
 
   Partner({this.code, this.status, this.message, this.data});
 
@@ -10,7 +10,7 @@ class Partner {
     code = json['code'];
     status = json['status'];
     message = json['message'];
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? PartnerData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -25,24 +25,24 @@ class Partner {
   }
 }
 
-class Data {
+class PartnerData {
   int? total;
   int? page;
   int? limit;
   int? totalPages;
-  List<Items>? items;
+  List<PartnerItems>? items;
 
-  Data({this.total, this.page, this.limit, this.totalPages, this.items});
+  PartnerData({this.total, this.page, this.limit, this.totalPages, this.items});
 
-  Data.fromJson(Map<String, dynamic> json) {
+  PartnerData.fromJson(Map<String, dynamic> json) {
     total = json['total'];
     page = json['page'];
     limit = json['limit'];
     totalPages = json['total_pages'];
     if (json['items'] != null) {
-      items = <Items>[];
+      items = <PartnerItems>[];
       json['items'].forEach((v) {
-        items!.add(Items.fromJson(v));
+        items!.add(PartnerItems.fromJson(v));
       });
     }
   }
@@ -60,7 +60,7 @@ class Data {
   }
 }
 
-class Items {
+class PartnerItems {
   int? id;
   String? name;
   String? url;
@@ -71,7 +71,7 @@ class Items {
   String? createdAt;
   String? updatedAt;
 
-  Items(
+  PartnerItems(
       {this.id,
       this.name,
       this.url,
@@ -82,7 +82,7 @@ class Items {
       this.createdAt,
       this.updatedAt});
 
-  Items.fromJson(Map<String, dynamic> json) {
+  PartnerItems.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     name = json['name'];
     url = json['url'];

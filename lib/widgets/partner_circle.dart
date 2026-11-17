@@ -11,7 +11,7 @@ class PartnerCircle extends StatelessWidget {
     this.size = 100,
   });
 
-  final Items partner;
+  final PartnerItems partner;
   final double size;
 
   static bool isValidPartnerUrl(String? rawUrl) {

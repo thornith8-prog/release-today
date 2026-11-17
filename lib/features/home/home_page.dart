@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/home_controller.dart';
-import '../../controllers/partner_controller.dart';
-import '../../controllers/search_bar_controller.dart';
 import '../../core/breakpoints.dart';
 import '../../core/navigation.dart';
 import '../../widgets/news_card.dart';
@@ -19,27 +17,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeController controller;
-  late final PartnerController partnerController;
 
   @override
   void initState() {
     super.initState();
-    if (Get.isRegistered<SearchBarController>()) {
-      Get.find<SearchBarController>().clearActiveTopic();
-    }
     controller = Get.find<HomeController>();
-    partnerController = Get.find<PartnerController>();
-    // Ensure news loads when the home page appears. This covers the case
-    // where the initial fetch failed (e.g. CORS proxy not ready yet) or the
-    // page is re-shown after navigating away — the permanent controller's
-    // onInit only runs once, so we retry here when there is no data.
-    if (controller.articles.isEmpty && !controller.isLoading.value) {
-      controller.load();
-    }
-    if (partnerController.partners.isEmpty &&
-        !partnerController.isLoading.value) {
-      partnerController.load();
-    }
+
   }
 
   double _heroSize(ScreenSize size) => switch (size) {
@@ -129,17 +112,17 @@ class _HomePageState extends State<HomePage> {
                     Text('Truth by partner', style: titleStyle),
                     const SizedBox(height: 12),
                     Obx(() {
-                      if (partnerController.isLoading.value) {
+                      if (controller.isLoadingPartner.value) {
                         return const ShimmerPartnerRow();
                       }
-                      final error = partnerController.error.value;
+                      final error = controller.errorPartner.value;
                       if (error != null) {
                         return ErrorView(
                           message: error,
-                          onRetry: partnerController.load,
+                          onRetry: controller.loadPartner,
                         );
                       }
-                      final partners = partnerController.partners;
+                      final partners = controller.partners;
                       if (partners.isEmpty) {
                         return const SizedBox.shrink();
                       }

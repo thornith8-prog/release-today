@@ -19,6 +19,7 @@ Page<void> _noTransition(GoRouterState state, Widget child) =>
 
 GoRouter buildRouter() {
   return GoRouter(
+    initialLocation: '/',
     routes: [
       // The shell keeps the sidebar, top bar and search bar mounted across pages.
       ShellRoute(

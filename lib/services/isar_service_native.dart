@@ -43,7 +43,7 @@ class IsarService {
         [SettingSchema],
         directory: directory ?? '',
         name: name,
-        inspector: false,
+        inspector: true,
       );
     } catch (e, st) {
       debugPrint('Warning: Could not open Isar database ($e). Using in-memory fallback.\n$st');
