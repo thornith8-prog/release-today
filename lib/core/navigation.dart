@@ -72,6 +72,11 @@ class AppNav {
     router.push('/article/$id', extra: article);
   }
 
+  /// Opens the Telegram Mini App support page.
+  static void goTelegramSupport() {
+    router.go('/telegram-support');
+  }
+
   /// Opens the paginated entries page for a topic.
   static void goTopicEntries(int topicId, String label) {
     _setSearchTopic(topicId);

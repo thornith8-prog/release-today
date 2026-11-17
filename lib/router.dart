@@ -11,6 +11,7 @@ import 'features/more/term_page.dart';
 import 'features/more/what_we_do_page.dart';
 import 'features/results/results_page.dart';
 import 'features/shell/app_shell.dart';
+import 'features/support/telegram_support_page.dart';
 
 /// Every page swaps instantly (no slide/fade). Only the content inside the
 /// shell changes, so a page transition adds no value here.
@@ -99,6 +100,11 @@ GoRouter buildRouter() {
                 ),
               );
             },
+          ),
+          GoRoute(
+            path: '/telegram-support',
+            pageBuilder: (context, state) =>
+                _noTransition(state, const TelegramSupportPage()),
           ),
         ],
       ),

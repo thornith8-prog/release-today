@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../controllers/telegram_controller.dart';
 import 'package:newsai/controllers/term_controller.dart';
 
 import '../controllers/about_controller.dart';
@@ -44,6 +45,7 @@ class AppBinding extends Bindings {
     Get.put(HomeController(repository: Get.find<ApiNewsRepository>()),
         permanent: true);
     Get.put(MoreController(Get.find<ApiNewsRepository>()), permanent: true);
+    Get.put(TelegramController(), permanent: true);
     Get.put(TopicsController(Get.find<ApiTopicRepository>()), permanent: true);
     Get.put(
       AboutController(service: isarService, repository: settingsRepo),

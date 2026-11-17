@@ -172,6 +172,15 @@ class AppSidebar extends GetView<AppController> {
                 onNavigate?.call();
               },
             ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.send, size: 20, color: Color(0xFF0088CC)),
+              title: const Text('Telegram Mini App'),
+              onTap: () {
+                AppNav.goTelegramSupport();
+                onNavigate?.call();
+              },
+            ),
           ],
         ),
         Positioned(
