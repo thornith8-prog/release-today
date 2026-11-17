@@ -20,8 +20,12 @@ class _MorePageState extends State<MorePage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()
-      ..addListener(_onScroll);
+    _scrollController = ScrollController()..addListener(_onScroll);
+    final more = Get.find<MoreController>();
+    more.syncWithHomeController();
+    if (more.articles.isEmpty && !more.isLoading.value) {
+      more.load();
+    }
   }
 
   @override
@@ -31,26 +35,54 @@ class _MorePageState extends State<MorePage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.maxScrollExtent > 0 && pos.pixels >= pos.maxScrollExtent - 200) {
       Get.find<MoreController>().loadMore();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final pad = Breakpoints.pagePadding(context);
-    final titleStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w400);
-
     return GetX<MoreController>(
-      builder: (c) {
+      builder: (controller) {
+        final pad = Breakpoints.pagePadding(context);
+        final titleStyle = Theme.of(context)
+            .textTheme
+            .headlineSmall
+            ?.copyWith(fontWeight: FontWeight.w400);
         final Widget sliver;
-        if (c.isLoading.value && c.articles.isEmpty) {
+        if (controller.isLoading.value && controller.articles.isEmpty) {
           sliver = const SliverToBoxAdapter(child: EmptyView());
-        } else if (c.error.value != null && c.articles.isEmpty) {
-          sliver = SliverToBoxAdapter(child: ErrorView(message: c.error.value!, onRetry: c.load));
-        } else if (c.articles.isEmpty) {
-          sliver = const SliverToBoxAdapter(child: EmptyView());
+        } else if (controller.error.value != null &&
+            controller.articles.isEmpty) {
+          sliver = SliverToBoxAdapter(
+            child: ErrorView(
+              message: controller.error.value!,
+              onRetry: () => controller.load(force: true),
+            ),
+          );
+        } else if (controller.articles.isEmpty) {
+          sliver = SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.article_outlined, size: 48),
+                  const SizedBox(height: 8),
+                  const Text('No articles available',
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                    onPressed: () => controller.load(force: true),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
         } else {
           sliver = SliverGrid.builder(
             gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
@@ -59,8 +91,9 @@ class _MorePageState extends State<MorePage> {
               crossAxisSpacing: 22,
               mainAxisSpacing: 22,
             ),
-            itemCount: c.articles.length,
-            itemBuilder: (context, i) => NewsCard(article: c.articles[i]),
+            itemCount: controller.articles.length,
+            itemBuilder: (context, i) =>
+                NewsCard(article: controller.articles[i]),
           );
         }
 
@@ -77,9 +110,10 @@ class _MorePageState extends State<MorePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('More news', style: titleStyle),
-                        if (c.error.value != null && c.articles.isNotEmpty)
+                        if (controller.error.value != null &&
+                            controller.articles.isNotEmpty)
                           TextButton.icon(
-                            onPressed: c.loadMore,
+                            onPressed: controller.loadMore,
                             icon: const Icon(Icons.refresh),
                             label: const Text('Retry'),
                           ),
@@ -87,10 +121,17 @@ class _MorePageState extends State<MorePage> {
                     ),
                   ),
                 ),
-                SliverPadding(padding: EdgeInsets.fromLTRB(pad, 16, pad, 24), sliver: sliver),
-                if (c.isLoadingMore.value && c.articles.isNotEmpty)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(pad, 16, pad, 24),
+                  sliver: sliver,
+                ),
+                if (controller.isLoadingMore.value &&
+                    controller.articles.isNotEmpty)
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
+                    child: SizedBox(
+                      height: 80,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
                   ),
               ],
             ),

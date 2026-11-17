@@ -19,9 +19,13 @@ class Articles {
     }
     if (json['data'] != null) {
       data = <ArticleData>[];
-      json['data'].forEach((v) {
-        data!.add(ArticleData.fromJson(v));
-      });
+      if (json['data'] is List) {
+        for (final v in json['data'] as List) {
+          if (v is Map) {
+            data!.add(ArticleData.fromJson(Map<String, dynamic>.from(v)));
+          }
+        }
+      }
     }
   }
 

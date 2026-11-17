@@ -13,3 +13,8 @@ build/
 __pycache__/
 *.pyc
 *.pyo
+
+# Native binaries
+*.dylib
+*.so
+*.dll

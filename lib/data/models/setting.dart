@@ -1,16 +1,27 @@
-class Setting {
-  final int id;
-  final String slug;
-  final String title;
-  final String contentHtml;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+import 'package:isar/isar.dart';
 
-  const Setting({
-    required this.id,
-    required this.slug,
-    required this.title,
-    required this.contentHtml,
+part 'setting.g.dart';
+
+@collection
+class Setting {
+  Id id = Isar.autoIncrement;
+
+  @Index(unique: true, replace: true)
+  String slug;
+
+  String title;
+
+  String contentHtml;
+
+  DateTime? createdAt;
+
+  DateTime? updatedAt;
+
+  Setting({
+    this.id = Isar.autoIncrement,
+    this.slug = '',
+    this.title = '',
+    this.contentHtml = '',
     this.createdAt,
     this.updatedAt,
   });
@@ -29,7 +40,7 @@ class Setting {
     return Setting(
       id: json['id'] is int
           ? json['id'] as int
-          : int.tryParse('${json['id']}') ?? 0,
+          : int.tryParse('${json['id']}') ?? Isar.autoIncrement,
       slug: (json['slug'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       contentHtml: (json['content_html'] ?? json['content'] ?? '').toString(),

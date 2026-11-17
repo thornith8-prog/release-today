@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../data/models/article.dart';
 import '../data/repositories/news_repository.dart';
+import 'home_controller.dart';
 
 /// Paginated "more" news. Loads `limit` articles per page via `skip` and
 /// appends each subsequent page instead of replacing the list.
@@ -20,39 +21,78 @@ class MoreController extends GetxController {
   static const int _limit = 20;
 
   bool _lastPageFull = true;
+  bool _fetching = false;
 
   @override
   void onInit() {
     super.onInit();
-    load();
+    syncWithHomeController();
+    // Load on first use if not already seeded from HomeController.
+    if (articles.isEmpty && !isLoading.value) {
+      load();
+    }
+  }
+
+  /// Seeds articles from [HomeController] if HomeController has already
+  /// fetched the latest news for the home page. This avoids re-fetching the
+  /// same 20 articles when navigating from Home to More and prevents the user
+  /// from being stuck staring at a loading view.
+  void syncWithHomeController() {
+    if (articles.isEmpty && Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      if (homeController.articles.isNotEmpty) {
+        articles.assignAll(homeController.articles);
+        _skip = homeController.articles.length;
+        _lastPageFull = homeController.articles.length >= _limit;
+        error.value = null;
+        isLoading.value = false;
+      }
+    }
   }
 
   /// First page: resets offset and replaces the article list.
-  Future<void> load() async {
+  ///
+  /// No-op while a fetch is already in flight. If [force] is false and articles
+  /// can be seeded from [HomeController], seeds from HomeController instead of
+  /// an unnecessary network roundtrip.
+  Future<void> load({bool force = false}) async {
+    if (!force) {
+      syncWithHomeController();
+      if (articles.isNotEmpty) return;
+    }
+    if (_fetching) return;
+    _fetching = true;
+    isLoading.value = true;
+    error.value = null;
     _skip = 0;
     _lastPageFull = true;
-    articles.clear();
-    await _fetch(replace: true);
+    try {
+      final response = await repository.latest(skip: _skip, limit: _limit);
+      final newArticles = response.data ?? [];
+      articles.assignAll(newArticles);
+      if (newArticles.length < _limit) {
+        _lastPageFull = false;
+      } else {
+        _skip = newArticles.length;
+      }
+    } catch (e, st) {
+      debugPrint('Failed to load more articles: $e\n$st');
+      final msg = e.toString().trim();
+      error.value = msg.isEmpty ? 'Failed to load articles.' : msg;
+    } finally {
+      isLoading.value = false;
+      _fetching = false;
+    }
   }
 
   /// Subsequent pages: appends to the list and advances the offset.
   Future<void> loadMore() async {
     if (isLoading.value || isLoadingMore.value || !_lastPageFull) return;
     isLoadingMore.value = true;
-    await _fetch(replace: false);
-    isLoadingMore.value = false;
-  }
-
-  Future<void> _fetch({required bool replace}) async {
-    error.value = null;
     try {
       final response = await repository.latest(skip: _skip, limit: _limit);
       final newArticles = response.data ?? [];
-      if (replace) {
-        articles.assignAll(newArticles);
-      } else {
-        articles.addAll(newArticles);
-      }
+      articles.addAll(newArticles);
       if (newArticles.length < _limit) {
         _lastPageFull = false;
       } else {
@@ -62,6 +102,8 @@ class MoreController extends GetxController {
       debugPrint('Failed to load more articles: $e\n$st');
       final msg = e.toString().trim();
       error.value = msg.isEmpty ? 'Failed to load articles.' : msg;
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 }

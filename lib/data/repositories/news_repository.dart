@@ -31,6 +31,9 @@ class ApiNewsRepository implements NewsRepository {
 
   ApiNewsRepository(this.api);
 
+  @override
+  String toString() => 'ApiNewsRepository';
+
   Articles _parseArticles(Response<dynamic> response) {
     if (response.status.hasError || response.body == null) {
       final detail = response.statusText?.trim();
@@ -43,24 +46,27 @@ class ApiNewsRepository implements NewsRepository {
     }
 
     final raw = response.body;
-    final Map<String, dynamic> json = switch (raw) {
-      Map<String, dynamic> m => m,
-      Map m => Map<String, dynamic>.from(m),
-      String s => jsonDecode(s) as Map<String, dynamic>,
-      _ => throw NewsApiException(
-          'Unexpected response format: ${raw.runtimeType}'),
-    };
+    Map<String, dynamic> json;
+    try {
+      json = switch (raw) {
+        Map<String, dynamic> m => m,
+        Map m => Map<String, dynamic>.from(m),
+        String s => jsonDecode(s) as Map<String, dynamic>,
+        _ => throw NewsApiException(
+            'Unexpected response format: ${raw.runtimeType}'),
+      };
+    } on FormatException {
+      throw NewsApiException('Failed to parse articles response.');
+    }
     return Articles.fromJson(json);
   }
 
   @override
-  Future<Articles> latest({int skip = 0, int limit = 10}) async {
+  Future<Articles> latest({int skip = 0, int limit = 20}) async {
     final response = await api.get(
       Env.latestPath,
       query: {'skip': '$skip', 'limit': '$limit'},
     );
-
-    printError(info: 'Fetch articles: ${response.headers.toString()}');
     return _parseArticles(response);
   }
 

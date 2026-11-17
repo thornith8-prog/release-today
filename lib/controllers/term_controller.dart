@@ -4,14 +4,12 @@ import 'package:get/get.dart';
 import '../data/models/setting.dart';
 import '../data/repositories/settings_repository.dart';
 
-/// Loads the "terms" setting (`GET /settings/terms`) and exposes it
-/// reactively. Falls back to static content when the backend has no entry.
+/// Loads the "terms" setting (`terms`) from Isar (synced with remote)
+/// and exposes it reactively. Falls back to static content when not available.
 class TermController extends GetxController {
   final ApiSettingsRepository repository;
 
   TermController(this.repository);
-
-  static final Map<String, Setting> _cache = <String, Setting>{};
 
   final Rx<Setting?> setting = Rx<Setting?>(null);
   final RxBool isLoading = false.obs;
@@ -20,27 +18,19 @@ class TermController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (_cache.containsKey('terms')) {
-      setting.value = _cache['terms']!;
-    } else {
-      loadAbout();
-    }
+    loadTerms();
   }
 
-  /// Loads the terms setting in the background. The page always renders its
-  /// bundled static content immediately, so this never leaves the screen blank
-  /// or stuck on a spinner. On failure the static content stays on screen.
-  Future<void> loadAbout({bool force = false}) async {
-    if (!force && _cache.containsKey('terms')) {
-      setting.value = _cache['terms']!;
-      return;
-    }
-
+  /// Loads the terms setting from Isar in the background. The page renders
+  /// bundled static content immediately until loaded.
+  Future<void> loadTerms({bool force = false}) async {
     try {
       isLoading.value = true;
       error.value = null;
+      if (force) {
+        await repository.syncSettings();
+      }
       final result = await repository.getSetting('terms');
-      _cache['terms'] = result;
       setting.value = result;
     } catch (e, st) {
       debugPrint('Failed to load terms: $e\n$st');
@@ -50,6 +40,9 @@ class TermController extends GetxController {
     }
   }
 
+  // Alias for backward compatibility
+  Future<void> loadAbout({bool force = false}) => loadTerms(force: force);
+
   @visibleForTesting
-  static void clearCache() => _cache.clear();
+  static void clearCache() {}
 }

@@ -4,6 +4,7 @@ import 'package:newsai/controllers/term_controller.dart';
 import '../controllers/about_controller.dart';
 import '../controllers/app_controller.dart';
 import '../controllers/home_controller.dart';
+import '../controllers/more_controller.dart';
 import '../controllers/partner_controller.dart';
 import '../controllers/privacy_controller.dart';
 import '../controllers/search_bar_controller.dart';
@@ -11,12 +12,12 @@ import '../controllers/topics_controller.dart';
 import '../controllers/what_we_do_controller.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/news_repository.dart';
-import '../controllers/more_controller.dart';
 import '../data/repositories/partner_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/topic_entry_repository.dart';
 import '../data/repositories/topic_repository.dart';
 import '../services/api_client.dart';
+import '../services/isar_service.dart';
 
 /// Registers the long-lived dependencies once, when the app starts.
 class AppBinding extends Bindings {
@@ -27,7 +28,18 @@ class AppBinding extends Bindings {
     Get.put(AuthRepository(Get.find<ApiClient>()), permanent: true);
     Get.put(ApiNewsRepository(Get.find<ApiClient>()), permanent: true);
     Get.put(ApiPartnerRepository(Get.find<ApiClient>()), permanent: true);
-    Get.put(ApiSettingsRepository(Get.find<ApiClient>()), permanent: true);
+
+    final isarService = Get.isRegistered<IsarService>()
+        ? Get.find<IsarService>()
+        : Get.put(IsarService(), permanent: true);
+
+    final settingsRepo = Get.put(
+      ApiSettingsRepository(Get.find<ApiClient>(), isarService),
+      permanent: true,
+    );
+    // Kick off background sync for settings
+    settingsRepo.syncSettings();
+
     Get.put(ApiTopicRepository(Get.find<ApiClient>()), permanent: true);
     Get.put(ApiTopicEntryRepository(Get.find<ApiClient>()), permanent: true);
     Get.put(AppController(Get.find<AuthRepository>()), permanent: true);
