@@ -32,7 +32,7 @@ class HomeController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      final response = await repository.latest(limit: 6);
+      final response = await repository.latest(limit: 12);
       debugPrint('Fetch news data: ${response.data?.length ?? 0} articles');
       articles.assignAll(response.data ?? []);
     } catch (e, st) {

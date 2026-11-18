@@ -83,7 +83,9 @@ class MoreController extends GetxController {
 
   /// Subsequent pages: appends to the list and advances the offset.
   Future<void> loadMore() async {
-    if (isLoading.value || isLoadingMore.value || !_lastPageFull) return;
+    // Prevent concurrent fetches or loading when no more pages.
+    if (_fetching || isLoading.value || isLoadingMore.value || !_lastPageFull) return;
+    _fetching = true;
     isLoadingMore.value = true;
     try {
       final response = await repository.latest(skip: _skip, limit: _limit);
@@ -95,11 +97,12 @@ class MoreController extends GetxController {
         _skip += newArticles.length;
       }
     } catch (e, st) {
-      debugPrint('Failed to load more articles: $e\n$st');
+      debugPrint('Failed to load more articles: $e\\n$st');
       final msg = e.toString().trim();
       error.value = msg.isEmpty ? 'Failed to load articles.' : msg;
     } finally {
       isLoadingMore.value = false;
+      _fetching = false;
     }
   }
 }
