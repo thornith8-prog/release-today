@@ -21,3 +21,5 @@ __pycache__/
 /run_web.sh
 /.github/workflows/qodana_code_quality.yml
 /qodana.yaml
+/test/
+/tool/ensure_cors_proxy.sh

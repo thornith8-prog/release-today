@@ -24,25 +24,6 @@ class _NewsAiAppState extends State<NewsAiApp> {
     super.initState();
     _router = buildRouter();
     AppNav.router = _router;
-    // Deep links that arrive while the app is already running (warm app).
-    // Cold-start links are matched by the initial route automatically once the
-    // /article/:id route exists.
-    _router.routeInformationProvider.addListener(_handleDeepLink);
-  }
-
-  @override
-  void dispose() {
-    _router.routeInformationProvider.removeListener(_handleDeepLink);
-    super.dispose();
-  }
-
-  void _handleDeepLink() {
-    final information = _router.routeInformationProvider.value;
-    final target = information.uri.path;
-    final current = _router.routerDelegate.currentConfiguration.fullPath;
-    if (target != current && target.isNotEmpty) {
-      _router.go(information.uri.toString());
-    }
   }
 
   @override

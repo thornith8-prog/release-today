@@ -63,5 +63,9 @@ class Env {
       _get('PRIVACY_URL', 'https://newsai.app/privacy');
 
   static bool get useCorsProxy => _get('NEWS_API_USE_CORS_PROXY', 'false').toLowerCase() == 'true';
+  static String get corsProxyUrl {
+    final raw = _get('NEWS_API_CORS_PROXY_URL', 'http://127.0.0.1:8787');
+    return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
+  }
   static int get timeoutSeconds => int.tryParse(_get('NEWS_API_TIMEOUT', '30')) ?? 30;
 }

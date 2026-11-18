@@ -10,7 +10,10 @@ class Partner {
     code = json['code'];
     status = json['status'];
     message = json['message'];
-    data = json['data'] != null ? PartnerData.fromJson(json['data']) : null;
+    final rawData = json['data'];
+    data = rawData is Map
+        ? PartnerData.fromJson(Map<String, dynamic>.from(rawData))
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -39,11 +42,14 @@ class PartnerData {
     page = json['page'];
     limit = json['limit'];
     totalPages = json['total_pages'];
-    if (json['items'] != null) {
+    final rawItems = json['items'];
+    if (rawItems is List) {
       items = <PartnerItems>[];
-      json['items'].forEach((v) {
-        items!.add(PartnerItems.fromJson(v));
-      });
+      for (final v in rawItems) {
+        if (v is Map) {
+          items!.add(PartnerItems.fromJson(Map<String, dynamic>.from(v)));
+        }
+      }
     }
   }
 

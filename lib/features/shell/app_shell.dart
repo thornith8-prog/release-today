@@ -12,9 +12,14 @@ import 'top_bar.dart';
 /// - desktop (>=1024): collapsible permanent sidebar
 /// - tablet / mobile: sidebar lives in a drawer opened from the menu button
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.child});
+  const AppShell({
+    super.key,
+    required this.child,
+    this.currentPath = '/',
+  });
 
   final Widget child;
+  final String currentPath;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -46,13 +51,21 @@ class _AppShellState extends State<AppShell> {
               backgroundColor: Colors.white,
               child: SafeArea(
                 child: AppSidebar(
-                    onNavigate: () => _scaffoldKey.currentState?.closeDrawer()),
+                  currentPath: widget.currentPath,
+                  onNavigate: () => _scaffoldKey.currentState?.closeDrawer(),
+                ),
               ),
             ),
       body: SafeArea(
         child: Row(
           children: [
-            if (wide) Obx(() => _AnimatedSidebar(open: _app.sidebarOpen.value)),
+            if (wide)
+              Obx(
+                () => _AnimatedSidebar(
+                  open: _app.sidebarOpen.value,
+                  currentPath: widget.currentPath,
+                ),
+              ),
             Expanded(
               child: Column(
                 children: [
@@ -73,9 +86,13 @@ class _AppShellState extends State<AppShell> {
 /// while its content keeps a fixed layout (no text reflow) and fades, so the
 /// main area slides over smoothly instead of jumping.
 class _AnimatedSidebar extends StatelessWidget {
-  const _AnimatedSidebar({required this.open});
+  const _AnimatedSidebar({
+    required this.open,
+    required this.currentPath,
+  });
 
   final bool open;
+  final String currentPath;
 
   static const double _width = 280;
   static const Duration _duration = Duration(milliseconds: 300);
@@ -110,7 +127,7 @@ class _AnimatedSidebar extends StatelessWidget {
                     decoration: const BoxDecoration(
                       border: Border(right: BorderSide(color: AppColors.line)),
                     ),
-                    child: const AppSidebar(),
+                    child: AppSidebar(currentPath: currentPath),
                   ),
                 ),
               ),

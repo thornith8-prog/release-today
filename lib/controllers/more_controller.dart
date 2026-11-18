@@ -27,10 +27,6 @@ class MoreController extends GetxController {
   void onInit() {
     super.onInit();
     syncWithHomeController();
-    // Load on first use if not already seeded from HomeController.
-    if (articles.isEmpty && !isLoading.value) {
-      load();
-    }
   }
 
   /// Seeds articles from [HomeController] if HomeController has already

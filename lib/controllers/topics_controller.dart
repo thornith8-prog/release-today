@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../core/storage.dart';
 import '../data/models/topic.dart';
 import '../data/repositories/topic_repository.dart';
+import 'app_controller.dart';
 
 /// Paginated list of topics belonging to the signed-in user.
 ///
@@ -29,7 +31,25 @@ class TopicsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    load(false);
+    final hasSession = (AuthStorage.accessToken?.isNotEmpty ?? false) ||
+        (Get.isRegistered<AppController>() &&
+            Get.find<AppController>().user.value != null);
+    if (hasSession) {
+      load(false);
+    } else {
+      isLoading.value = false;
+    }
+  }
+
+  /// Clears loaded topics (e.g., when the user signs out).
+  void clear() {
+    topicsItem.clear();
+    error.value = null;
+    _offset = 0;
+    _total = null;
+    _hasMore = false;
+    isLoading.value = false;
+    isLoadingMore.value = false;
   }
 
   /// (Re)load the first page of topics.

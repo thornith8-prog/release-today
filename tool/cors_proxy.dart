@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 const String _targetBase = 'https://news-ai-d115c798.fastapicloud.dev';
@@ -16,9 +17,11 @@ void _setSecurityAndCorsHeaders(HttpResponse res, String? origin) {
     res.headers.set('Access-Control-Allow-Origin', origin!);
     res.headers.set('Vary', 'Origin');
   }
-  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers',
-      'Content-Type, Accept, Authorization, X-User-Id');
+  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.headers.set(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Accept, Authorization, X-User-Id',
+  );
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('X-Frame-Options', 'DENY');
 }
@@ -38,97 +41,107 @@ bool _isAllowedPath(String path) {
   return allowedPrefixes.any(path.startsWith);
 }
 
+void _copyForwardHeaders(HttpRequest req, HttpClientRequest upstreamReq) {
+  upstreamReq.headers.set(HttpHeaders.acceptHeader, 'application/json');
+  final authHeader = req.headers.value('authorization');
+  if (authHeader != null) {
+    upstreamReq.headers.set(HttpHeaders.authorizationHeader, authHeader);
+  }
+  final userIdHeader = req.headers.value('x-user-id');
+  if (userIdHeader != null) {
+    upstreamReq.headers.set('X-User-Id', userIdHeader);
+  }
+}
+
+Future<void> _handleRequest(HttpClient client, HttpRequest req) async {
+  final origin = req.headers.value('origin');
+  final res = req.response;
+  _setSecurityAndCorsHeaders(res, origin);
+
+  final method = req.method.toUpperCase();
+  if (method == 'OPTIONS') {
+    res.statusCode = HttpStatus.noContent;
+    await res.close();
+    return;
+  }
+
+  final path = req.uri.path;
+  if (method == 'GET' && path == '/__proxy_health') {
+    res.statusCode = HttpStatus.ok;
+    res.headers.contentType = ContentType.json;
+    res.write('{"status":"ok"}');
+    await res.close();
+    return;
+  }
+
+  if (method != 'GET' && method != 'POST' && method != 'DELETE') {
+    res.statusCode = HttpStatus.methodNotAllowed;
+    await res.close();
+    return;
+  }
+
+  if (!_isAllowedPath(path)) {
+    res.statusCode = HttpStatus.forbidden;
+    await res.close();
+    return;
+  }
+
+  try {
+    final targetUri = Uri.parse(_targetBase).replace(
+      path: req.uri.path,
+      query: req.uri.hasQuery ? req.uri.query : null,
+    );
+
+    final upstreamReq = await client.openUrl(method, targetUri);
+    upstreamReq.followRedirects = true;
+    _copyForwardHeaders(req, upstreamReq);
+
+    if (method == 'POST') {
+      upstreamReq.headers
+          .set(HttpHeaders.contentTypeHeader, 'application/json');
+      final bodyBytes = await req.fold<List<int>>(
+        <int>[],
+        (prev, chunk) => prev..addAll(chunk),
+      );
+      upstreamReq.add(bodyBytes);
+    }
+
+    final upstreamRes = await upstreamReq.close();
+    res.statusCode = upstreamRes.statusCode;
+    final contentType = upstreamRes.headers.contentType;
+    if (contentType != null) {
+      res.headers.contentType = contentType;
+    }
+    await upstreamRes.pipe(res);
+  } catch (_) {
+    res.statusCode = HttpStatus.badGateway;
+    res.headers.contentType = ContentType.json;
+    res.write(jsonEncode({'detail': 'Upstream service unavailable.'}));
+    await res.close();
+  }
+}
+
 Future<void> main() async {
   final client = HttpClient();
   // Bind strictly to 127.0.0.1 (loopback) for local development.
-  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, _port);
-  stdout.writeln(
-      'Local CORS proxy listening on http://127.0.0.1:$_port -> $_targetBase');
-
-  await for (final HttpRequest req in server) {
-    final origin = req.headers.value('origin');
-    final res = req.response;
-    _setSecurityAndCorsHeaders(res, origin);
-
-    final method = req.method.toUpperCase();
-    if (method == 'OPTIONS') {
-      res.statusCode = HttpStatus.noContent;
-      await res.close();
-      continue;
-    }
-
-    if (method != 'GET' && method != 'POST') {
-      res.statusCode = HttpStatus.methodNotAllowed;
-      await res.close();
-      continue;
-    }
-
-    final path = req.uri.path;
-    if (!_isAllowedPath(path)) {
-      res.statusCode = HttpStatus.forbidden;
-      await res.close();
-      continue;
-    }
-
-    try {
-      final targetUri = Uri.parse(_targetBase).replace(
-        path: req.uri.path,
-        query: req.uri.hasQuery ? req.uri.query : null,
-      );
-
-      if (method == 'GET') {
-        final upstreamReq = await client.getUrl(targetUri);
-        upstreamReq.followRedirects = true;
-        upstreamReq.headers.set(HttpHeaders.acceptHeader, 'application/json');
-        // Forward the Authorization header when present.
-        final authHeader = req.headers.value('authorization');
-        if (authHeader != null) {
-          upstreamReq.headers.set(HttpHeaders.authorizationHeader, authHeader);
-        }
-        final userIdHeader = req.headers.value('x-user-id');
-        if (userIdHeader != null) {
-          upstreamReq.headers.set('X-User-Id', userIdHeader);
-        }
-
-        final upstreamRes = await upstreamReq.close();
-        res.statusCode = upstreamRes.statusCode;
-        final contentType = upstreamRes.headers.contentType;
-        if (contentType != null) {
-          res.headers.contentType = contentType;
-        }
-        await upstreamRes.pipe(res);
-      } else {
-        // POST
-        final upstreamReq = await client.postUrl(targetUri);
-        upstreamReq.followRedirects = true;
-        upstreamReq.headers
-            .set(HttpHeaders.contentTypeHeader, 'application/json');
-        upstreamReq.headers.set(HttpHeaders.acceptHeader, 'application/json');
-        final authHeader = req.headers.value('authorization');
-        if (authHeader != null) {
-          upstreamReq.headers.set(HttpHeaders.authorizationHeader, authHeader);
-        }
-        final userIdHeader = req.headers.value('x-user-id');
-        if (userIdHeader != null) {
-          upstreamReq.headers.set('X-User-Id', userIdHeader);
-        }
-        // Forward the request body to upstream.
-        final bodyBytes = await req.fold<List<int>>(
-            <int>[], (prev, chunk) => prev..addAll(chunk));
-        upstreamReq.add(bodyBytes);
-        final upstreamRes = await upstreamReq.close();
-        res.statusCode = upstreamRes.statusCode;
-        final contentType = upstreamRes.headers.contentType;
-        if (contentType != null) {
-          res.headers.contentType = contentType;
-        }
-        await upstreamRes.pipe(res);
-      }
-    } catch (e) {
-      res.statusCode = HttpStatus.badGateway;
-      res.headers.contentType = ContentType.json;
-      res.write('{"detail":"Proxy error: $e"}');
-      await res.close();
-    }
+  final HttpServer server;
+  try {
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, _port);
+  } on SocketException {
+    stdout.writeln(
+      'Local CORS proxy is already listening on http://127.0.0.1:$_port',
+    );
+    return;
   }
+
+  stdout.writeln(
+    'Local CORS proxy listening on http://127.0.0.1:$_port -> $_targetBase',
+  );
+
+  // Dispatch each request concurrently instead of blocking in `await for` so
+  // parallel browser requests (/recommendations, /partners, /settings) do not
+  // queue behind each other.
+  server.listen((HttpRequest req) {
+    _handleRequest(client, req);
+  });
 }

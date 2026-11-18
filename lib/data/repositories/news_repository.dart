@@ -149,7 +149,21 @@ class ApiNewsRepository implements NewsRepository {
             : 'Failed to load partners (${code ?? "network/CORS error"})',
       );
     }
-    return Partner.fromJson(response.body);
+
+    final raw = response.body;
+    Map<String, dynamic> json;
+    try {
+      json = switch (raw) {
+        Map<String, dynamic> m => m,
+        Map m => Map<String, dynamic>.from(m),
+        String s => jsonDecode(s) as Map<String, dynamic>,
+        _ => throw PartnerApiException(
+            'Unexpected response format: ${raw.runtimeType}'),
+      };
+    } on FormatException {
+      throw PartnerApiException('Failed to parse partners response.');
+    }
+    return Partner.fromJson(json);
   }
 
   @override

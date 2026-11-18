@@ -167,6 +167,9 @@ class AppController extends GetxController {
     if (Get.isRegistered<SearchBarController>()) {
       Get.find<SearchBarController>().clearActiveTopic();
     }
+    if (Get.isRegistered<TopicsController>()) {
+      Get.find<TopicsController>().clear();
+    }
     AuthStorage.clear();
     user.value = null;
   }

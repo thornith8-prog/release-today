@@ -9,207 +9,236 @@ import '../../data/models/topic.dart';
 import '../../widgets/auth_dialog.dart';
 
 class AppSidebar extends GetView<AppController> {
-  const AppSidebar({super.key, this.onNavigate});
+  const AppSidebar({
+    super.key,
+    this.onNavigate,
+    this.currentPath = '/',
+  });
 
   /// Called after a navigation, so the mobile drawer can close itself.
   final VoidCallback? onNavigate;
+
+  /// Active route path used to highlight the selected sidebar item.
+  final String currentPath;
+
+  static final ShapeBorder _tileShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(12),
+  );
+
+  Widget _buildNavTile({
+    required Widget leading,
+    required Widget title,
+    required bool selected,
+    required VoidCallback onTap,
+    bool dense = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: ListTile(
+        dense: dense,
+        selected: selected,
+        shape: _tileShape,
+        selectedColor: AppColors.ink,
+        selectedTileColor: AppColors.ink.withValues(alpha: 0.08),
+        leading: leading,
+        title: title,
+        onTap: () {
+          onNavigate?.call();
+          onTap();
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Stack(
-      fit: StackFit.expand,
-      alignment: AlignmentDirectional.topStart,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            ListTile(
-              leading: SizedBox.square(
-                dimension: 24,
-                child: SvgPicture.asset('assets/icons/icon_home.svg'),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(top: 16, bottom: 12),
+            children: [
+              _buildNavTile(
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: SvgPicture.asset('assets/icons/icon_home.svg'),
+                ),
+                title: Text('Home', style: textTheme.titleSmall),
+                selected: currentPath == '/',
+                onTap: AppNav.goHome,
               ),
-              title: Text('Home', style: textTheme.titleSmall),
-              onTap: () {
-                AppNav.goHome();
-                onNavigate?.call();
-              },
-            ),
-            Obx(() {
-              if (controller.user.value == null) return const SizedBox.shrink();
-              return GetX<TopicsController>(
-                builder: (tc) => ListView(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  children: [
-                    ListTile(
-                      leading: SizedBox.square(
-                        dimension: 24,
-                        child: SvgPicture.asset('assets/icons/icon_recent.svg'),
-                      ),
-                      title: Text('Recent', style: textTheme.titleSmall),
-                    ),
-                    if (tc.error.value != null && tc.topicsItem.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 8),
-                        child: Text(
-                          tc.error.value!,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: AppColors.avatar),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    for (final t in tc.topicsItem)
+              Obx(() {
+                if (controller.user.value == null) {
+                  return const SizedBox.shrink();
+                }
+                return GetX<TopicsController>(
+                  builder: (tc) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       ListTile(
-                        dense: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 24),
-                        leading: const Icon(Icons.label_outline, size: 20),
-                        title: Text(t.label,
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle:
-                            t.description != null && t.description!.isNotEmpty
+                        leading: SizedBox.square(
+                          dimension: 24,
+                          child:
+                              SvgPicture.asset('assets/icons/icon_recent.svg'),
+                        ),
+                        title: Text('Recent', style: textTheme.titleSmall),
+                      ),
+                      if (tc.error.value != null && tc.topicsItem.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 8),
+                          child: Text(
+                            tc.error.value!,
+                            style: textTheme.bodySmall
+                                ?.copyWith(color: AppColors.avatar),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      for (final t in tc.topicsItem)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 1),
+                          child: ListTile(
+                            dense: true,
+                            shape: _tileShape,
+                            selected: t.id != null &&
+                                currentPath == '/topics/${t.id}/entries',
+                            selectedColor: AppColors.ink,
+                            selectedTileColor:
+                                AppColors.ink.withValues(alpha: 0.08),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            leading: const Icon(Icons.label_outline, size: 20),
+                            title: Text(t.label,
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: t.description != null &&
+                                    t.description!.isNotEmpty
                                 ? Text(t.description!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: textTheme.bodySmall)
                                 : null,
-                        trailing: (t.id != null)
-                            ? IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    size: 18, color: AppColors.avatar),
-                                tooltip: 'Delete topic',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                splashRadius: 16,
-                                onPressed: () =>
-                                    _confirmDeleteTopic(context, tc, t),
-                              )
-                            : null,
-                        onTap: () {
-                          if (t.id != null) {
-                            AppNav.goTopicEntries(t.id!, t.label);
-                          } else {
-                            AppNav.goSearch(t.label);
-                          }
-                          onNavigate?.call();
-                        },
-                      ),
-                    if (tc.isLoadingMore.value)
-                      const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        child: SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                            trailing: (t.id != null)
+                                ? IconButton(
+                                    icon: const Icon(Icons.delete_outline,
+                                        size: 18, color: AppColors.avatar),
+                                    tooltip: 'Delete topic',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 16,
+                                    onPressed: () =>
+                                        _confirmDeleteTopic(context, tc, t),
+                                  )
+                                : null,
+                            onTap: () {
+                              onNavigate?.call();
+                              if (t.id != null) {
+                                AppNav.goTopicEntries(t.id!, t.label);
+                              } else {
+                                AppNav.goSearch(t.label);
+                              }
+                            },
+                          ),
                         ),
-                      ),
-                    if (tc.hasMore &&
-                        !tc.isLoadingMore.value &&
-                        tc.topicsItem.isNotEmpty)
-                      ListTile(
-                        dense: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 24),
-                        title: const Text('Load more topics',
-                            style: TextStyle(fontSize: 13)),
-                        onTap: tc.loadMore,
-                      ),
-                  ],
+                      if (tc.isLoadingMore.value)
+                        const Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      if (tc.hasMore &&
+                          !tc.isLoadingMore.value &&
+                          tc.topicsItem.isNotEmpty)
+                        ListTile(
+                          dense: true,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 24),
+                          title: const Text('Load more topics',
+                              style: TextStyle(fontSize: 13)),
+                          onTap: tc.loadMore,
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              _buildNavTile(
+                dense: true,
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: SvgPicture.asset('assets/icons/icon_about_us.svg'),
                 ),
-              );
-            }),
-            ListTile(
-              dense: true,
-              leading: SizedBox.square(
-                dimension: 24,
-                child: SvgPicture.asset('assets/icons/icon_about_us.svg'),
+                title: const Text('About us'),
+                selected: currentPath == '/about',
+                onTap: AppNav.goAbout,
               ),
-              title: const Text('About us'),
-              onTap: () {
-                AppNav.goAbout();
-                onNavigate?.call();
-              },
-            ),
-            ListTile(
-              dense: true,
-              leading: SizedBox.square(
-                dimension: 24,
-                child: SvgPicture.asset('assets/icons/icon_what_we_do.svg'),
+              _buildNavTile(
+                dense: true,
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: SvgPicture.asset('assets/icons/icon_what_we_do.svg'),
+                ),
+                title: const Text('What we do'),
+                selected: currentPath == '/what-we-do',
+                onTap: AppNav.goWhatWeDo,
               ),
-              title: const Text('What we do'),
-              onTap: () {
-                AppNav.goWhatWeDo();
-                onNavigate?.call();
-              },
-            ),
-            ListTile(
-              dense: true,
-              leading: SizedBox.square(
-                dimension: 24,
-                child: SvgPicture.asset('assets/icons/icon_term.svg'),
+              _buildNavTile(
+                dense: true,
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: SvgPicture.asset('assets/icons/icon_term.svg'),
+                ),
+                title: const Text('Terms & conditions'),
+                selected: currentPath == '/terms',
+                onTap: AppNav.goTerms,
               ),
-              title: const Text('Terms & conditions'),
-              onTap: () {
-                AppNav.goTerms();
-                onNavigate?.call();
-              },
-            ),
-            ListTile(
-              dense: true,
-              leading: SizedBox.square(
-                dimension: 24,
-                child: SvgPicture.asset('assets/icons/icon_privacy.svg'),
+              _buildNavTile(
+                dense: true,
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: SvgPicture.asset('assets/icons/icon_privacy.svg'),
+                ),
+                title: const Text('Privacy & policy'),
+                selected: currentPath == '/privacy',
+                onTap: AppNav.goPrivacy,
               ),
-              title: const Text('Privacy & policy'),
-              onTap: () {
-                AppNav.goPrivacy();
-                onNavigate?.call();
-              },
-            ),
-            ListTile(
-              dense: true,
-              leading: const Icon(Icons.send, size: 20, color: Color(0xFF0088CC)),
-              title: const Text('Telegram Mini App'),
-              onTap: () {
-                AppNav.goTelegramSupport();
-                onNavigate?.call();
-              },
-            ),
-          ],
+              _buildNavTile(
+                dense: true,
+                leading: const Icon(Icons.send,
+                    size: 20, color: Color(0xFF0088CC)),
+                title: const Text('Telegram Mini App'),
+                selected: currentPath == '/telegram-support',
+                onTap: AppNav.goTelegramSupport,
+              ),
+            ],
+          ),
         ),
-        Positioned(
-          child: _userProfiles(context, textTheme),
-          left: 0,
-          right: 0,
-          bottom: 0,
-        )
+        _userProfiles(context, textTheme),
       ],
     );
   }
 
-  _userProfiles(BuildContext context, TextTheme textTheme) {
+  Widget _userProfiles(BuildContext context, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(
-          height: 1,
-        ),
+        const Divider(height: 1),
         _userProfile(context, textTheme),
         const Center(
-            child: Text(
-          'Version: 1.0.0-Belta',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        )),
-        const SizedBox(
-          height: 5,
-        )
+          child: Text(
+            'Version: 1.0.0-Belta',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 5),
       ],
     );
   }
@@ -487,5 +516,4 @@ class AppSidebar extends GetView<AppController> {
       }
     });
   }
-
 }

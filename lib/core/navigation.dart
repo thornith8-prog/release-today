@@ -18,29 +18,37 @@ class AppNav {
     }
   }
 
+  static void _goPath(String path) {
+    final currentUri = router.routerDelegate.currentConfiguration.uri;
+    if (currentUri.path == path && !currentUri.hasQuery) {
+      return;
+    }
+    router.go(path);
+  }
+
   static void goHome() {
-    router.go('/');
+    _goPath('/');
   }
 
   /// Opens the paginated "more news" screen.
   static void goMore() {
-    router.go('/more');
+    _goPath('/more');
   }
 
   static void goAbout() {
-    router.go('/about');
+    _goPath('/about');
   }
 
   static void goWhatWeDo() {
-    router.go('/what-we-do');
+    _goPath('/what-we-do');
   }
 
   static void goTerms() {
-    router.go('/terms');
+    _goPath('/terms');
   }
 
   static void goPrivacy() {
-    router.go('/privacy');
+    _goPath('/privacy');
   }
 
   /// Records the query in "Recent" and opens the results page.
@@ -53,15 +61,17 @@ class AppNav {
     if (Get.isRegistered<AppController>()) {
       Get.find<AppController>().addRecent(q);
     }
-    router.go(
-      Uri(
-        path: '/search',
-        queryParameters: {
-          'q': q,
-          if (topicId != null) 'topicId': '$topicId',
-        },
-      ).toString(),
-    );
+    final target = Uri(
+      path: '/search',
+      queryParameters: {
+        'q': q,
+        if (topicId != null) 'topicId': '$topicId',
+      },
+    ).toString();
+    if (router.routerDelegate.currentConfiguration.uri.toString() == target) {
+      return;
+    }
+    router.go(target);
   }
 
   /// Opens the article detail page for a shared article.
@@ -74,7 +84,7 @@ class AppNav {
 
   /// Opens the Telegram Mini App support page.
   static void goTelegramSupport() {
-    router.go('/telegram-support');
+    _goPath('/telegram-support');
   }
 
   /// Opens the paginated entries page for a topic.
@@ -83,11 +93,13 @@ class AppNav {
     if (Get.isRegistered<AppController>()) {
       Get.find<AppController>().addRecent(label);
     }
-    router.go(
-      Uri(
-        path: '/topics/$topicId/entries',
-        queryParameters: {'label': label},
-      ).toString(),
-    );
+    final target = Uri(
+      path: '/topics/$topicId/entries',
+      queryParameters: {'label': label},
+    ).toString();
+    if (router.routerDelegate.currentConfiguration.uri.toString() == target) {
+      return;
+    }
+    router.go(target);
   }
 }

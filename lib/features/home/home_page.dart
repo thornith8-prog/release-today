@@ -58,7 +58,10 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text('The latest news', style: titleStyle),
+                        Flexible(
+                          child: Text('The latest news', style: titleStyle),
+                        ),
+                        const SizedBox(width: 12),
                         const InkWell(
                           onTap: AppNav.goMore,
                           child: Text('More'),
